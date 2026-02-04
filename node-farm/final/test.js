@@ -6,7 +6,6 @@
 // ]
 // let template = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8')
 
-
 // function replaceTemplate(template, ele){
 //     let storeReplacedTemplate = template.replace(/{%PRODUCTNAME%}/g, ele.name);
 //     storeReplacedTemplate = storeReplacedTemplate.replace(/{%IMAGE%}/g, ele.Age);
@@ -17,7 +16,6 @@
 // const cardsHtml = personalData.map(ele=>replaceTemplate(template, ele));
 // console.log(cardsHtml);
 // console.log(typeof(cardsHtml))
-
 
 // function a(ele){
 //     return ele*3;
@@ -33,6 +31,6 @@
 //     {'name':'CCC', 'Age':30},
 // ]
 
-let l = [1,2,3,4,4,5,6]
+let l = [1, 2, 3, 4, 4, 5, 6];
 console.log(l.join());
 console.log(l.join(''));
