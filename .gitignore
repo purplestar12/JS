@@ -1,0 +1,4 @@
+node-farm/final/node_modules/
+node-farm/final/test.js
+node-farm/final/.prettierrc
+.vscode/
