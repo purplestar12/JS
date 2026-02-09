@@ -1,6 +1,10 @@
-node-farm/final/node_modules/
-node-farm/final/test.js
-node-farm/final/.prettierrc
-asynchronous_js/.prettierrc
-asynchronous_js/node_modules/
 .vscode/
+1-node-farm/final/node_modules/
+1-node-farm/final/test.js
+1-node-farm/final/.prettierrc
+3-asynchronous_js/.prettierrc
+3-asynchronous_js/node_modules/
+4-natours/.prettierrc
+4-natours/node_modules/
+4-natours/config.env
+
