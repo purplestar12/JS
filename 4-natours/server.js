@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
+process.on('uncaughtException', (err) => {
+  console.log('Uncaught Error 🔴! App shutting down');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
 //loads .env file contents to process.env
 dotenv.config({ path: './config.env' });
 
@@ -14,9 +20,7 @@ const db = process.env.DATABASE.replace(
 );
 
 //returns promise
-mongoose
-  .connect(db)
-  .then(() => console.log('DB connection is successful!!'));
+mongoose.connect(db).then(() => console.log('DB connection is successful!!'));
 
 // START SERVER
 app.listen(PORT, () => {

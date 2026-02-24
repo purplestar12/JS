@@ -7,10 +7,10 @@ const router = express.Router();
 router.post('/signup', authRouter.signup);
 router.post('/login', authRouter.login);
 
-router
-  .route('/')
-  .get(userRouter.getAllUsers)
-  .post(userRouter.createUser);
+router.post('/forgotPassword', authRouter.forgotPassword);
+router.patch('/resetPassword/:token', authRouter.resetPassword);
+
+router.route('/').get(userRouter.getAllUsers).post(userRouter.createUser);
 
 router
   .route('/:id')

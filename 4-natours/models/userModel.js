@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
@@ -23,13 +24,15 @@ const userSchema = new mongoose.Schema({
   photo: {
     type: String,
   },
+  role: {
+    type: String,
+    enum: ['user', 'guide', 'lead-guide', 'admin'],
+    default: 'user',
+  },
   password: {
     type: String,
     required: [true, 'Please enter the password'],
-    minlength: [
-      8,
-      'A password should have more than or equal to 8 characters',
-    ],
+    minlength: [8, 'A password should have more than or equal to 8 characters'],
     maxlength: [
       15,
       'A password should have less than or equal to 15 characters',
@@ -47,6 +50,8 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 userSchema.methods.checkPassword = async function (
@@ -56,12 +61,10 @@ userSchema.methods.checkPassword = async function (
   return await bcrypt.compare(givenUserPassword, dbHashPassword);
 };
 
-userSchema.methods.isPasswordChangedAfterJWT = function (
-  JWTTimeStamp,
-) {
+userSchema.methods.isPasswordChangedAfterJWT = function (JWTTimeStamp) {
   if (this.passwordChangedAt) {
     const passwordChangedTimeStamp = parseInt(
-      this.passwordChangedAt.getTime() / 1000,
+      this.passwordChangedAt.getTime() / 1000, //change date to seconds, then change to milliseconds
     );
     console.log(passwordChangedTimeStamp, JWTTimeStamp);
     return passwordChangedTimeStamp > JWTTimeStamp;
@@ -69,10 +72,28 @@ userSchema.methods.isPasswordChangedAfterJWT = function (
   return false;
 };
 
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  console.log(resetToken, 'passwordResetToken: ', passwordResetToken);
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; //expiry time: 10 minutes. convert it to milliseconds before adding
+  return resetToken;
+};
+
+// console.log(
+//     'resetToken: ',
+//     resetToken,
+//     this.createPasswordResetToken,
+//     typeof this.createPasswordResetToken,
+//   );
+
 userSchema.pre('save', async function () {
   //if the password is not updated, don't hash it
   //runs only when the 'password' field is updated
-  console.log('log:: ', this.isModified('password'));
+  console.log('password isModified:: ', this.isModified('password'));
   if (!this.isModified('password')) return; //first time data comes, returns true only
   this.password = await bcrypt.hash(this.password, 10); //hash the 'password' with the cost of 10, which means 2 power 10 times, it is hashed
   this.confirmPassword = undefined;
