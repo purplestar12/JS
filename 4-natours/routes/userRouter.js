@@ -9,8 +9,16 @@ router.post('/login', authRouter.login);
 
 router.post('/forgotPassword', authRouter.forgotPassword);
 router.patch('/resetPassword/:token', authRouter.resetPassword);
+router.patch(
+  '/updateMyPassword',
+  authRouter.protectRoute,
+  authRouter.updatePassword,
+);
 
-router.route('/').get(userRouter.getAllUsers).post(userRouter.createUser);
+router.patch('/updateMe', authRouter.protectRoute, userRouter.updateMe);
+router.delete('/deleteMe', authRouter.protectRoute, userRouter.deleteMe);
+
+router.route('/').get(userRouter.getAllUsers);
 
 router
   .route('/:id')

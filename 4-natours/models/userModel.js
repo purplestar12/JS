@@ -52,6 +52,28 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
+});
+
+userSchema.pre('save', async function () {
+  //if the password is not updated, don't hash it
+  //runs only when the 'password' field is updated
+  if (!this.isModified('password')) return; //first time data comes, returns true only
+  this.password = await bcrypt.hash(this.password, 10); //hash the 'password' with the cost of 10, which means 2 power 10 times, it is hashed
+  this.confirmPassword = undefined;
+});
+
+userSchema.pre('save', function () {
+  if (!this.isModified('password') || this.isNew) return;
+  this.passwordChangedAt = Date.now() - 1000; //this 1 sec diff is coz, jwt.iat is in seconds whereas passwordChangedAt.getTime() gives in sec
+});
+
+userSchema.pre(/^find/, function () {
+  this.find({ active: { $ne: false } }); //'this' refers to query object, not the curr document
 });
 
 userSchema.methods.checkPassword = async function (
@@ -78,26 +100,9 @@ userSchema.methods.createPasswordResetToken = function () {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  console.log(resetToken, 'passwordResetToken: ', passwordResetToken);
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; //expiry time: 10 minutes. convert it to milliseconds before adding
   return resetToken;
 };
-
-// console.log(
-//     'resetToken: ',
-//     resetToken,
-//     this.createPasswordResetToken,
-//     typeof this.createPasswordResetToken,
-//   );
-
-userSchema.pre('save', async function () {
-  //if the password is not updated, don't hash it
-  //runs only when the 'password' field is updated
-  console.log('password isModified:: ', this.isModified('password'));
-  if (!this.isModified('password')) return; //first time data comes, returns true only
-  this.password = await bcrypt.hash(this.password, 10); //hash the 'password' with the cost of 10, which means 2 power 10 times, it is hashed
-  this.confirmPassword = undefined;
-});
 
 const Users = mongoose.model('Users', userSchema);
 

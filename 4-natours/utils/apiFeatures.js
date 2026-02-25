@@ -9,19 +9,16 @@ class APIFeatures {
     excludeFields.forEach((ele) => delete queryObj[ele]);
 
     //  1B. ADVANCED FILTERING
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(
-      /\b(gte|gt|lte|lt)\b/g,
-      (match) => `$${match}`,
-    );
-    this.queryPrototype = this.queryPrototype.find(
-      JSON.parse(queryStr),
-    );
+    let queryStr = JSON.stringify(queryObj); //{"duration":{"gte":"5"},"difficulty":"easy"}
+
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`); //{"duration":{"$gte":"5"},"difficulty":"easy"}
+
+    this.queryPrototype = this.queryPrototype.find(JSON.parse(queryStr));
     return this;
   }
   sortByFields() {
     if (this.reqQuery.sort) {
-      const sortBy = this.reqQuery.sort.split(',').join(' ');
+      const sortBy = this.reqQuery.sort.split(',').join(' '); //-price,-ratingsAverage to "-price -ratingsAverage"
       this.queryPrototype = this.queryPrototype.sort(sortBy); //query.sort('price, -ratingsAverage')
     } else {
       this.queryPrototype = this.queryPrototype.sort('_id'); //'-' minus symbol is used for descending order
@@ -43,9 +40,7 @@ class APIFeatures {
     const page = this.reqQuery.page * 1 || 1;
     const limit = this.reqQuery.limit * 1 || 100;
     const skipNum = (page - 1) * limit;
-    this.queryPrototype = this.queryPrototype
-      .skip(skipNum)
-      .limit(limit); //query.skip(<NUM_OF_DOC_TO_BE_SKIPPED>).limit(<NUM_OF_DOC_SHOWN_PER_PAGE>)
+    this.queryPrototype = this.queryPrototype.skip(skipNum).limit(limit); //query.skip(<NUM_OF_DOC_TO_BE_SKIPPED>).limit(<NUM_OF_DOC_SHOWN_PER_PAGE>)
     return this;
   }
 }

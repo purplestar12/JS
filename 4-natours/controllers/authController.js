@@ -8,6 +8,32 @@ const emailSender = require('./../utils/email');
 
 dotenv.config((path = './../config.env'));
 
+const createAndSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000, //till cookie expire timestamp, stored in browser
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+  res.cookie('jwt', token, cookieOptions);
+
+  //remove password in response while creating a doc.
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      users: user,
+    },
+  });
+};
+
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_TOKEN_EXPIRES_IN,
@@ -23,15 +49,7 @@ exports.signup = async (req, res, next) => {
       confirmPassword: req.body.confirmPassword,
     });
 
-    const token = signToken(newUser._id);
-
-    res.status(201).json({
-      status: 'success',
-      token,
-      data: {
-        users: newUser,
-      },
-    });
+    createAndSendToken(newUser, 201, res);
   } catch (err) {
     res.status(400).json({
       status: 'failure',
@@ -41,23 +59,22 @@ exports.signup = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
-  const { email, password } = req.body;
-  if (!password || !email) {
-    return next(new AppError('Please provide email and password', 401));
+  try {
+    const { email, password } = req.body;
+    if (!password || !email) {
+      return next(new AppError('Please provide email and password', 401));
+    }
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || !(await user.checkPassword(password, user.password))) {
+      return next(new Error('User or password does not match'));
+    }
+    createAndSendToken(user, 200, res);
+  } catch (err) {
+    res.status(400).json({
+      status: 'failure',
+      message: err.message,
+    });
   }
-  const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await user.checkPassword(password, user.password))) {
-    return next(new Error('User or password does not match'));
-  }
-  const token = signToken(user._id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-    data: {
-      user,
-    },
-  });
 };
 
 exports.protectRoute = async (req, res, next) => {
@@ -96,7 +113,12 @@ exports.protectRoute = async (req, res, next) => {
     );
 
     if (isPasswordChanged) {
-      return next(new AppError('User changed password recently !', 401));
+      return next(
+        new AppError(
+          'User changed password recently! Please login again!',
+          401,
+        ),
+      );
     }
     req.user = currentUser;
     //grant access to the protected route
@@ -137,6 +159,8 @@ exports.forgotPassword = async (req, res, next) => {
   const message = `Forgot your password? Please click the link to update your password.\n${resetURL} 
   \nPlease ignore this email, if you didn't forget your password`;
 
+  console.log('message:: ', message);
+
   //3. send the random token to the given user email
   try {
     await emailSender({
@@ -149,33 +173,67 @@ exports.forgotPassword = async (req, res, next) => {
       message: 'gmail sent',
     });
   } catch (err) {
+    console.log('user:: ', user);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
+
     return next(new AppError('Error in sending email. Please try again!', 500));
   }
 };
 
 exports.resetPassword = async (req, res, next) => {
   // get the user based on token
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(req.params.token)
-    .digest('hex');
+  try {
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
 
-  console.log(hashedToken);
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
 
-  const user = await User.findOne({ passwordResetToken: hashedToken });
-  console.log('user: ', user);
+    //if user exists & the token is not expired, update the password
+    if (!user) {
+      return next(new AppError('Token is invalid or expired'), 400);
+    }
 
-  //if user exists & the token is not expired, update the password
-  if (user && user.passwordResetExpires <= Date.now()) {
     user.password = req.body.password;
-    user.isPasswordChangedAt = Date.now();
-    await user.save();
-  }
-  next();
-  //update the passwordChangedAt property
+    user.confirmPassword = req.body.confirmPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    //update the passwordChangedAt property -- in pre('save')
 
-  //log the user in & send the fresh jwt
+    await user.save();
+
+    //log the user in & send the fresh jwt
+    createAndSendToken(user, 200, res);
+  } catch (err) {
+    next(new AppError(err.message, 400));
+  }
+};
+
+exports.updatePassword = async (req, res, next) => {
+  //get user based on email and password
+
+  const user = await User.findById(req.user._id).select('+password');
+
+  const isPasswordMatchWithDB = await user.checkPassword(
+    req.body.currentPassword,
+    user.password,
+  );
+
+  if (!isPasswordMatchWithDB) {
+    return next(new AppError('Please provide the correct password', 400));
+  }
+  try {
+    user.password = req.body.newPassword;
+    user.confirmPassword = req.body.confirmPassword;
+    await user.save();
+    createAndSendToken(user, 200, res);
+  } catch (err) {
+    return next(new AppError(err.message, 500));
+  }
 };
