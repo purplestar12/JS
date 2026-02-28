@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Tour = require('./../models/tourModel');
 const APIFeatures = require('./../utils/apiFeatures');
+const handlerFactory = require('./handlerFactory');
 
 //  2. ROUTE HANDLERS
 
@@ -12,110 +13,11 @@ exports.getTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = async (req, res) => {
-  try {
-    const feature = new APIFeatures(Tour.find(), req.query)
-      .filer()
-      .sortByFields()
-      .displayFields()
-      .paginate();
-
-    const tours = await feature.queryPrototype;
-    return res.status(200).send({
-      status: 'success',
-      tourLength: tours.length,
-      data: {
-        tours,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'failure',
-      message: err.message,
-    });
-  }
-};
-
-exports.getTour = async (req, res) => {
-  try {
-    const tour = await Tour.findById(req.params.id);
-    //Tour.findOne({_id: req.params.id})
-    return res.status(200).json({
-      status: 'success',
-      data: {
-        tour,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'failure',
-      message: err.message,
-    });
-  }
-};
-
-exports.createTour = async (req, res) => {
-  try {
-    const newTour = await Tour.create(req.body);
-    //const newTour = new Tour({})
-    //newTour.save()
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        newTour,
-      },
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: 'failure',
-      message: err.message,
-    });
-  }
-};
-
-exports.updateTour = async (req, res) => {
-  try {
-    console.log(req.params.id, req.body);
-    const tour = await Tour.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      },
-    );
-    console.log('tour:: ', tour);
-    return res.status(200).json({
-      status: 'success',
-      data: {
-        tour,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'failure',
-      message: err.message,
-    });
-  }
-};
-
-exports.deleteTour = async (req, res) => {
-  try {
-    const tour = await Tour.findByIdAndDelete(req.params.id);
-    console.log(tour);
-    return res.status(204).json({
-      //204 - NO CONTENT
-      status: 'success',
-      data: null,
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: 'failure',
-      message: err.message,
-    });
-  }
-};
+exports.createTour = handlerFactory.createOne(Tour);
+exports.updateTour = handlerFactory.updateOne(Tour);
+exports.deleteTour = handlerFactory.deleteOne(Tour);
+exports.getTour = handlerFactory.getOne(Tour, { path: 'reviews' });
+exports.getAllTours = handlerFactory.getAll(Tour);
 
 exports.getTourStats = async (req, res) => {
   try {

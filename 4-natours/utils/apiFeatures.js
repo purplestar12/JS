@@ -5,6 +5,7 @@ class APIFeatures {
   }
   filer() {
     const queryObj = { ...this.reqQuery }; //take the fields out of the obj & create a new obj
+    console.log('this.reqQuery: ', this.reqQuery);
     const excludeFields = ['page', 'limit', 'sort', 'fields'];
     excludeFields.forEach((ele) => delete queryObj[ele]);
 

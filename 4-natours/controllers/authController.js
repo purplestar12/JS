@@ -42,11 +42,12 @@ const signToken = (id) => {
 
 exports.signup = async (req, res, next) => {
   try {
+    const { name, email, password, confirmPassword } = req.body;
     const newUser = await User.create({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password,
-      confirmPassword: req.body.confirmPassword,
+      name,
+      email,
+      password,
+      confirmPassword,
     });
 
     createAndSendToken(newUser, 201, res);

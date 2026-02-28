@@ -1,5 +1,6 @@
 const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
+const handlerFactory = require('./handlerFactory');
 
 const filterBody = (bodyObj, ...allowedFields) => {
   let filteredBodyObj = {};
@@ -10,51 +11,22 @@ const filterBody = (bodyObj, ...allowedFields) => {
   return filteredBodyObj;
 };
 
-exports.getAllUsers = async (req, res) => {
-  const users = await User.find();
-
-  return res.status(200).json({
-    status: 'success',
-    numUsers: users.length,
-    data: {
-      users,
-    },
-  });
-};
-
-exports.getUser = (req, res) => {
-  return res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined',
-  });
-};
-
 exports.createUser = (req, res) => {
   return res.status(500).json({
     status: 'error',
-    message: 'This route is not yet defined',
+    message:
+      'This route is not yet defined! Please use /signin to create a user',
   });
 };
 
-exports.updateUser = (req, res) => {
-  return res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined',
-  });
-};
-
-exports.deleteUser = (req, res) => {
-  return res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined',
-  });
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  return next();
 };
 
 exports.updateMe = async (req, res, next) => {
   //password shouldnot be updated in this route
-  console.log('req.body.password', req.body.password);
   if (req.body.password || req.body.confirmPassword) {
-    console.log('req.body. after', req.body.password);
     return next(
       new AppError(
         'Password cannot be changed here. Only the user data can be updated',
@@ -86,3 +58,9 @@ exports.deleteMe = async (req, res, next) => {
     data: null,
   });
 };
+
+//do not UPADATE password in this
+exports.updateUser = handlerFactory.updateOne(User);
+exports.deleteUser = handlerFactory.deleteOne(User);
+exports.getUser = handlerFactory.getOne(User);
+exports.getAllUsers = handlerFactory.getAll(User);

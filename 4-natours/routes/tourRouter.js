@@ -1,9 +1,13 @@
 const express = require('express');
 const tourRouter = require('./../controllers/tourController');
 const authController = require('./../controllers/authController');
+const reviewRouter = require('./reviewRouter');
 
 //    A. CREATE ROUTER
 const router = express.Router();
+
+//MOUNTING A NESTED ROUTE
+router.use('/:tourId/reviews', reviewRouter);
 
 // PARAM MIDDLEWARE
 // router.param('id', tourRouter.checkId);

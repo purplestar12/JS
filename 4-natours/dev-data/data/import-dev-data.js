@@ -10,22 +10,34 @@ const db = process.env.DATABASE.replace(
   process.env.DATABASE_PASSWORD,
 );
 
-mongoose
-  .connect(db)
-  .then(() => console.log('DB connect succesfully!'));
+mongoose.connect(db).then(() => console.log('DB connect succesfully!'));
 
 const tourData = JSON.parse(
-  fs.readFileSync('./dev-data/data/tours-simple.json', 'utf-8'),
+  fs.readFileSync('./dev-data/data/tours.json', 'utf-8'),
 );
 
 console.log(typeof tourData);
 
-const createDocs = async () => {
+const importData = async () => {
   try {
     await Tour.create(tourData);
+    console.log('Data imported successfully');
   } catch (err) {
     console.log(err.message);
   }
 };
 
-createDocs();
+const deleteData = async () => {
+  try {
+    await Tour.deleteMany();
+    console.log('Data deleted successfully');
+  } catch (err) {
+    console.log(err.message);
+  }
+};
+
+if (process.argv[2] === '--import') {
+  importData();
+} else if (process.argv[2] === '--delete') {
+  deleteData();
+}
