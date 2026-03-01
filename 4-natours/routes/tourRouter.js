@@ -18,18 +18,32 @@ router
   .get(tourRouter.getTopTours, tourRouter.getAllTours);
 
 router.route('/tour-stats').get(tourRouter.getTourStats);
-router.route('/monthly-plan/:year').get(tourRouter.getMonthlyPlan);
+router
+  .route('/monthly-plan/:year')
+  .get(
+    authController.protectRoute,
+    authController.restrictTo('admin', 'lead-guide', 'guide'),
+    tourRouter.getMonthlyPlan,
+  );
 
 //    B. DEFINE ROUTER
 router
   .route('/')
-  .get(authController.protectRoute, tourRouter.getAllTours)
-  .post(tourRouter.createTour);
+  .get(tourRouter.getAllTours)
+  .post(
+    authController.protectRoute,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourRouter.createTour,
+  );
 
 router
   .route('/:id')
   .get(tourRouter.getTour)
-  .patch(tourRouter.updateTour)
+  .patch(
+    authController.protectRoute,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourRouter.updateTour,
+  )
   .delete(
     authController.protectRoute,
     authController.restrictTo('admin', 'lead-guide'),

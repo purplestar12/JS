@@ -5,7 +5,6 @@ const reviewSchema = new mongoose.Schema(
   {
     review: {
       type: String,
-      maxLength: [50, 'The review length shouldnot exceed 50 characters'],
       required: [true, 'The review shouldnot be empty'],
     },
     rating: {
@@ -17,13 +16,13 @@ const reviewSchema = new mongoose.Schema(
       type: Date,
       default: Date.now, //calls automatically when a new doc is created
     },
-    tourId: {
+    tour: {
       //Parent referencing - in every tour, review is there. so tour is the parent which produces the child
       type: mongoose.Schema.ObjectId,
       ref: 'Tour',
       required: [true, 'The tour shouldnot be empty'],
     },
-    userId: {
+    user: {
       //Parent referencing
       type: mongoose.Schema.ObjectId,
       ref: 'User',
@@ -42,14 +41,14 @@ const reviewSchema = new mongoose.Schema(
 
 reviewSchema.pre(/^find/, function () {
   // this.populate({
-  //   path: 'tourId',
+  //   path: 'tour',
   //   select: 'name',
   // }).populate({
   //   path: 'userId',
   //   select: 'name photo',
   // });
   this.populate({
-    path: 'userId',
+    path: 'user',
     select: 'name photo',
   });
 });

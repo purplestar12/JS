@@ -90,7 +90,7 @@ exports.getAll = (Model) => async (req, res, next) => {
   try {
     let filterObj = {};
     //to allow nested 'GET' reviews on TOUR
-    if (req.params.tourId) filterObj = { tourId: req.params.tourId };
+    if (req.params.tourId) filterObj = { tour: req.params.tourId };
     const feature = new APIFeatures(Model.find(filterObj), req.query)
       .filer()
       .sortByFields()

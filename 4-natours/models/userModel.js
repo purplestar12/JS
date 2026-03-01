@@ -59,22 +59,22 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.pre('save', async function () {
-  //if the password is not updated, don't hash it
-  //runs only when the 'password' field is updated
-  if (!this.isModified('password')) return; //first time data comes, returns true only
-  this.password = await bcrypt.hash(this.password, 10); //hash the 'password' with the cost of 10, which means 2 power 10 times, it is hashed
-  this.confirmPassword = undefined;
-});
+// userSchema.pre('save', async function () {
+//   //if the password is not updated, don't hash it
+//   //runs only when the 'password' field is updated
+//   if (!this.isModified('password')) return; //first time data comes, returns true only
+//   this.password = await bcrypt.hash(this.password, 10); //hash the 'password' with the cost of 10, which means 2 power 10 times, it is hashed
+//   this.confirmPassword = undefined;
+// });
 
-userSchema.pre('save', function () {
-  if (!this.isModified('password') || this.isNew) return;
-  this.passwordChangedAt = Date.now() - 1000; //this 1 sec diff is coz, jwt.iat is in seconds whereas passwordChangedAt.getTime() gives in sec
-});
+// userSchema.pre('save', function () {
+//   if (!this.isModified('password') || this.isNew) return;
+//   this.passwordChangedAt = Date.now() - 1000; //this 1 sec diff is coz, jwt.iat is in seconds whereas passwordChangedAt.getTime() gives in sec
+// });
 
-userSchema.pre(/^find/, function () {
-  this.find({ active: { $ne: false } }); //'this' refers to query object, not the curr document
-});
+// userSchema.pre(/^find/, function () {
+//   this.find({ active: { $ne: false } }); //'this' refers to query object, not the curr document
+// });
 
 userSchema.methods.checkPassword = async function (
   givenUserPassword,

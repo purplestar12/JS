@@ -37,6 +37,7 @@ app.use('/api', limiter);
 //express.json() - internally calls next()
 app.use(express.json({ limit: '10kb' })); //limits the body within limit
 
+//SECURITY MIDDLEWARES - mongoSanitize, xss, hpp
 //sanitize the req body against NoSQL query injection
 app.use(mongoSanitize());
 

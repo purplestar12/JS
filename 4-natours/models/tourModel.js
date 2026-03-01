@@ -128,10 +128,10 @@ tourSchema.virtual('durationWeeks').get(function () {
 });
 
 //storing an array of child id which grows indefinitely would not be a good design
-//if a parents need to access the child --> 'virtual populate'(do the referencing to the child without persisting the data of child)
+//if a parent need to access the child --> 'virtual populate'(do the referencing to the child without persisting the data of child)
 tourSchema.virtual('reviews', {
   ref: 'Review',
-  foreignField: 'tourId',
+  foreignField: 'tour',
   localField: '_id',
 });
 
@@ -142,7 +142,7 @@ tourSchema.pre('save', function () {
 
 // //middleware that embed the user-details from 'user' collection in the 'tour' collection, using the 'id' in 'tour' collection
 // tourSchema.pre('save', async function () {
-//   const guidesPromises = this.guides.map((userId) => User.findById(userId));
+//   const guidesPromises = this.guides.map((user) => User.findById(user));
 //   this.guides = await Promise.all(guidesPromises);
 // });
 
