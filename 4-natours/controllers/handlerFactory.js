@@ -70,7 +70,7 @@ exports.getOne = (Model, populateOptions) => async (req, res, next) => {
     if (populateOptions) query = query.populate(populateOptions);
     const doc = await query;
     if (!doc) {
-      next(new AppError('No document is found with the given ID', 404));
+      return next(new AppError('No document is found with the given ID', 404));
     }
     return res.status(200).json({
       status: 'success',
@@ -88,6 +88,7 @@ exports.getOne = (Model, populateOptions) => async (req, res, next) => {
 
 exports.getAll = (Model) => async (req, res, next) => {
   try {
+    // await Model.collection.dropIndex('price_1');
     let filterObj = {};
     //to allow nested 'GET' reviews on TOUR
     if (req.params.tourId) filterObj = { tour: req.params.tourId };
@@ -98,6 +99,7 @@ exports.getAll = (Model) => async (req, res, next) => {
       .paginate();
 
     const docs = await feature.queryPrototype;
+    // const docs = await feature.queryPrototype.explain(); //to view the stats of execution
     return res.status(200).send({
       status: 'success',
       docLength: docs.length,

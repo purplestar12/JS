@@ -43,6 +43,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating should be more than or equal to 1'],
       max: [5, 'Rating should be less than or equal to 5'],
+      set: (val) => Math.round(val * 10) / 10, //4.6666 -> 46.666 -> 46 -> 4.6
     },
     ratingsQuantity: {
       type: Number,
@@ -122,6 +123,11 @@ const tourSchema = new mongoose.Schema(
     },
   },
 );
+//CREATED INDEXES - SINGLE FIELD INDEX, COMPOSITE INDEX
+// tourSchema.index({ price: 1, ratingsAverage: -1 });
+//tourSchema.index({ slug: 1 });
+
+tourSchema.index({ startLocation: '2dsphere' });
 
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
@@ -164,14 +170,15 @@ tourSchema.post(/^find/, function (docs) {
   console.log(`The query took ${Date.now() - this.start} milliseconds`);
 });
 
-tourSchema.pre('aggregate', function () {
-  this.pipeline().unshift({
-    //'this' - query object
-    $match: {
-      secretTour: { $ne: true },
-    },
-  });
-});
+// tourSchema.pre('aggregate', function () {
+//   this.pipeline().unshift({
+//     //'this' - query object
+//     $match: {
+//       secretTour: { $ne: true },
+//     },
+//   });
+//   console.log('this.pipeline(): ', this.pipeline());
+// });
 // tourSchema.post('save', function (doc, next) {
 //   console.log('After saving.... this func exe');
 //   next();
