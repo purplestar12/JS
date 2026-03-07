@@ -85,6 +85,8 @@ exports.protectRoute = async (req, res, next) => {
     //1. Check if jwt token is there
     if (headers.authorization && headers.authorization.startsWith('Bearer')) {
       token = headers.authorization.split(' ')[1];
+    } else if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
     }
     if (!token) {
       return next(
@@ -126,6 +128,47 @@ exports.protectRoute = async (req, res, next) => {
     next();
   } catch (err) {
     next(err);
+  }
+};
+
+exports.isLoggedInUser = async (req, res, next) => {
+  try {
+    let token = '';
+    //1. Check if jwt token is there
+    if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+    }
+    if (!token) {
+      return next();
+    }
+    //2. verify the token
+    const decodedJwt = await promisify(jwt.verify)(
+      token,
+      process.env.JWT_SECRET,
+    );
+
+    console.log('decodedJwt: ', decodedJwt);
+
+    //3. Check if user exist based on id
+    const currentUser = await User.findById(decodedJwt.id);
+    if (!currentUser) {
+      return next();
+    }
+
+    //4. Check if password is changed after the token issuance
+    const isPasswordChanged = currentUser.isPasswordChangedAfterJWT(
+      decodedJwt.iat,
+    );
+
+    if (isPasswordChanged) {
+      return next();
+    }
+    //5. THERE IS A LOGGED IN USER
+    res.locals.user = currentUser; //'.locals' can b accessed in all templates
+    //grant access to the protected route
+    return next();
+  } catch (err) {
+    return next(err);
   }
 };
 

@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -5,17 +6,46 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const tourRouter = require('./routes/tourRouter');
 const userRouter = require('./routes/userRouter');
 const reviewRouter = require('./routes/reviewRouter');
+const viewRouter = require('./routes/viewRouter');
+
 const globalErrorHandler = require('./controllers/errorController');
 
 const app = express();
 
+app.set('view engine', 'pug'); //'view engine' - Which template engine to use
+app.set('views', path.join(__dirname, 'views')); //'views' - Where template files are stored
+
+//to access a file from a folder, not from the route
+//serving static files
+//For any incoming req, check inside the 'public' folder to see if a file matches the URL path
+app.use(express.static(path.join(__dirname, 'public'))); //path.join()-to identify path separator based on OS
+
 //1.  MIDDLEWARES
 //set security http headers
-app.use(helmet()); //helmet() -func call returns a func
+// app.use(helmet()); //helmet() -func call returns a func
+app.use(
+  helmet.contentSecurityPolicy({
+    //to allow my app to use external api from blocking
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
+      styleSrc: ["'self'", 'https://unpkg.com', 'https://fonts.googleapis.com'],
+      imgSrc: [
+        "'self'",
+        'data:',
+        'https://*.tile.openstreetmap.org',
+        'https://unpkg.com',
+      ],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      connectSrc: ["'self'", 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
+    },
+  }),
+);
 
 console.log('node_env: ', process.env.NODE_ENV);
 
@@ -36,6 +66,7 @@ app.use('/api', limiter);
 //It is a body parser, to add data from body to the req obj
 //express.json() - internally calls next()
 app.use(express.json({ limit: '10kb' })); //limits the body within limit
+app.use(cookieParser()); //parses the data from cookie which jwt
 
 //SECURITY MIDDLEWARES - mongoSanitize, xss, hpp
 //sanitize the req body against NoSQL query injection
@@ -58,14 +89,11 @@ app.use(
   }),
 );
 
-//to access a file from a folder, not from the route
-//serving static files
-app.use(express.static(`${__dirname}/public`));
-
 //CUSTOM MIDDLE-WARE FUNCTION
 //for just normal testing -this middleware
 app.use((req, res, next) => {
   console.log('request log');
+  console.log(req.cookies);
   next();
 });
 
@@ -83,6 +111,9 @@ app.use((req, res, next) => {
 //  3. ROUTES
 
 //    C. MOUNT ROUTER
+
+app.use('/', viewRouter);
+
 app.use('/api/v1/tours', tourRouter); //app.use(path, middleware_func)
 app.use('/api/v1/users', userRouter);
 

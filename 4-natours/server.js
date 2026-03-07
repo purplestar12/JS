@@ -13,6 +13,7 @@ dotenv.config({ path: './config.env' });
 const app = require('./app');
 
 const PORT = process.env.PORT;
+const LOCALHOST = process.env.LOCALHOST;
 
 const db = process.env.DATABASE.replace(
   '<DATABASE_PASSWORD>',
@@ -23,6 +24,6 @@ const db = process.env.DATABASE.replace(
 mongoose.connect(db).then(() => console.log('DB connection is successful!!'));
 
 // START SERVER
-app.listen(PORT, () => {
+app.listen(PORT, LOCALHOST, () => {
   console.log(`The server is listening at port ${PORT}`);
 });
