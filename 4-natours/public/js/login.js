@@ -1,14 +1,9 @@
-// import dotenv from 'dotenv';
-
-// dotenv.config({ path: '/config.env' });
-
-// const LOCALHOST = process.env.LOCALHOST;
-// const PORT = process.env.PORT;
+import axios from 'axios';
 
 const LOCALHOST = '127.0.0.1';
 const PORT = 9000;
 
-const login = async (email, password) => {
+export const login = async (email, password) => {
   try {
     const res = await axios({
       method: 'POST',
@@ -28,11 +23,3 @@ const login = async (email, password) => {
     alert(err.response.data.message);
   }
 };
-
-document.querySelector('.form').addEventListener('submit', (event) => {
-  event.preventDefault();
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
-  login(email, password);
-});
