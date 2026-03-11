@@ -4,12 +4,25 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
-router.use(authController.isLoggedInUser); //to show the header 'logout' button or not
+//authController.isLoggedInUser - to show the header 'logout' button or not
 
-router.get('/', viewController.getOverview);
+router.get('/', authController.isLoggedInUser, viewController.getOverview);
+router.get(
+  '/login',
+  authController.isLoggedInUser,
+  viewController.getLoginPage,
+);
+router.get(
+  '/tour/:slug',
+  authController.isLoggedInUser,
+  viewController.getTourDetails,
+);
+router.get('/me', authController.protectRoute, viewController.getMyAccount);
 
-router.get('/login', viewController.getLoginPage);
-
-router.get('/tour/:slug', viewController.getTourDetails);
+router.post(
+  '/submit-user-details',
+  authController.protectRoute,
+  viewController.updateUserDetails,
+);
 
 module.exports = router;

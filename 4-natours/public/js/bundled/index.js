@@ -212,11 +212,15 @@ var _webImmediateJs = require("core-js/modules/web.immediate.js");
 var _regeneratorRuntime = require("regenerator-runtime");
 var _login = require("./login");
 var _mapbox = require("./mapbox");
+var _updateSettings = require("./updateSettings");
 //DOM
 const mapBox = document.getElementById('map');
-const loginForm = document.querySelector('.form');
+const loginForm = document.querySelector('.form--login');
+const logoutBtn = document.querySelector('.nav__el--logout');
+const saveUserData = document.querySelector('.form-user-data');
+const saveUserPassword = document.querySelector('.form-user-password');
 //VALUE
-//DELEGATE THE TASK
+// DELEGATE THE TASK
 if (mapBox) {
     const locations = JSON.parse(mapBox.dataset.locations);
     (0, _mapbox.displayMap)(locations);
@@ -227,8 +231,37 @@ if (loginForm) loginForm.addEventListener('submit', (e)=>{
     const password = document.getElementById('password').value;
     (0, _login.login)(email, password);
 });
+if (logoutBtn) {
+    console.log('listening');
+    logoutBtn.addEventListener('click', (0, _login.logout));
+}
+if (saveUserData) saveUserData.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    (0, _updateSettings.updateSettings)({
+        name,
+        email
+    }, 'data');
+});
+if (saveUserPassword) saveUserPassword.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    document.querySelector('.btn-save-password').textContent = 'Updating...';
+    const currentPassword = document.getElementById('password-current').value;
+    const newPassword = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('password-confirm').value;
+    await (0, _updateSettings.updateSettings)({
+        currentPassword,
+        newPassword,
+        confirmPassword
+    }, 'password');
+    document.querySelector('.btn-save-password').textContent = 'Save password';
+    document.getElementById('password-current').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('password-confirm').value = '';
+});
 
-},{"core-js/modules/web.immediate.js":"49tUX","regenerator-runtime":"dXNgZ","./login":"7yHem","./mapbox":"3zDlz"}],"49tUX":[function(require,module,exports,__globalThis) {
+},{"core-js/modules/web.immediate.js":"49tUX","regenerator-runtime":"dXNgZ","./login":"7yHem","./mapbox":"3zDlz","./updateSettings":"l3cGY"}],"49tUX":[function(require,module,exports,__globalThis) {
 'use strict';
 // TODO: Remove this module from `core-js@4` since it's split to modules listed below
 require("52e9b3eefbbce1ed");
@@ -2070,8 +2103,10 @@ try {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "login", ()=>login);
+parcelHelpers.export(exports, "logout", ()=>logout);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
+var _alert = require("./alert");
 const LOCALHOST = '127.0.0.1';
 const PORT = 9000;
 const login = async (email, password)=>{
@@ -2085,17 +2120,35 @@ const login = async (email, password)=>{
             }
         });
         if (res.data.status === 'success') {
-            alert('Logged in successfully!');
+            (0, _alert.showAlert)('success', 'Logged in successfully!');
             window.setTimeout(()=>{
                 location.assign('/');
             }, 1500);
         }
     } catch (err) {
-        alert(err.response.data.message);
+        (0, _alert.showAlert)('error', err.response.data.message);
+    }
+};
+const logout = async ()=>{
+    try {
+        console.log('hitting logout ');
+        const res = await (0, _axiosDefault.default)({
+            method: 'POST',
+            url: `http://${LOCALHOST}:${PORT}/api/v1/users/logout`
+        });
+        if (res.data.status === 'success') {
+            (0, _alert.showAlert)('success', 'Logged out successfully!');
+            window.setTimeout(()=>{
+                location.reload(true);
+            // location.assign('/');
+            }, 3000);
+        }
+    } catch (err) {
+        (0, _alert.showAlert)('error', 'Error logging out! Please try again.');
     }
 };
 
-},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports,__globalThis) {
+},{"axios":"jo6P5","./alert":"kxdiQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>(0, _axiosJsDefault.default));
@@ -7114,6 +7167,21 @@ Object.entries(HttpStatusCode).forEach(([key, value])=>{
 });
 exports.default = HttpStatusCode;
 
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kxdiQ":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "showAlert", ()=>showAlert);
+const hideAlert = ()=>{
+    const el = document.querySelector('.alert');
+    if (el) el.parentElement.removeChild(el);
+};
+const showAlert = (type, msg)=>{
+    hideAlert();
+    const markUp = `<div class="alert alert--${type}">${msg}</div>`;
+    document.querySelector('body').insertAdjacentHTML('afterbegin', markUp);
+    window.setTimeout(hideAlert, 5000); //hide the created alert after 5 seconds
+};
+
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3zDlz":[function(require,module,exports,__globalThis) {
 // const locations = JSON.parse(document.getElementById('map').dataset.locations);
 // console.log(locations);
@@ -7148,6 +7216,28 @@ const displayMap = (locations)=>{
     }
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["f2QDv"], "f2QDv", "parcelRequire11c7", {})
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"l3cGY":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "updateSettings", ()=>updateSettings);
+var _axios = require("axios");
+var _axiosDefault = parcelHelpers.interopDefault(_axios);
+var _alert = require("./alert");
+const updateSettings = async (data, type)=>{
+    try {
+        const url = type === 'data' ? 'http://127.0.0.1:9000/api/v1/users/updateMe' : 'http://127.0.0.1:9000/api/v1/users/updateMyPassword';
+        const res = await (0, _axiosDefault.default)({
+            method: 'PATCH',
+            url,
+            data
+        });
+        console.log('res.data.status: ', res.data.status);
+        if (res.data.status === 'success') (0, _alert.showAlert)('success', `${type.toUpperCase()} updated successfully!`);
+    } catch (err) {
+        (0, _alert.showAlert)('error', 'Error updating details. Please check the details!');
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./alert":"kxdiQ","axios":"jo6P5"}]},["f2QDv"], "f2QDv", "parcelRequire11c7", {})
 
 //# sourceMappingURL=index.js.map

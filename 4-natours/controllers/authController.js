@@ -16,6 +16,7 @@ const createAndSendToken = (user, statusCode, res) => {
       Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000, //till cookie expire timestamp, stored in browser
     ),
     httpOnly: true,
+    sameSite: 'Strict',
   };
 
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
@@ -32,6 +33,14 @@ const createAndSendToken = (user, statusCode, res) => {
       users: user,
     },
   });
+};
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedOut', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
 };
 
 const signToken = (id) => {
@@ -67,7 +76,7 @@ exports.login = async (req, res, next) => {
     }
     const user = await User.findOne({ email }).select('+password');
     if (!user || !(await user.checkPassword(password, user.password))) {
-      return next(new Error('User or password does not match'));
+      return next(new AppError('Incorrect email or password'));
     }
     createAndSendToken(user, 200, res);
   } catch (err) {
@@ -124,6 +133,7 @@ exports.protectRoute = async (req, res, next) => {
       );
     }
     req.user = currentUser;
+    res.locals.user = currentUser;
     //grant access to the protected route
     next();
   } catch (err) {
@@ -168,7 +178,7 @@ exports.isLoggedInUser = async (req, res, next) => {
     //grant access to the protected route
     return next();
   } catch (err) {
-    return next(err);
+    return next(); //if loggedout, jwt is malformed. in that case, we don't want to cause error. not used next(err)
   }
 };
 
@@ -268,7 +278,6 @@ exports.updatePassword = async (req, res, next) => {
     req.body.currentPassword,
     user.password,
   );
-
   if (!isPasswordMatchWithDB) {
     return next(new AppError('Please provide the correct password', 400));
   }

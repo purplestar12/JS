@@ -13,6 +13,7 @@ const userRouter = require('./routes/userRouter');
 const reviewRouter = require('./routes/reviewRouter');
 const viewRouter = require('./routes/viewRouter');
 
+const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
 const app = express();
@@ -66,7 +67,8 @@ app.use('/api', limiter);
 //It is a body parser, to add data from body to the req obj
 //express.json() - internally calls next()
 app.use(express.json({ limit: '10kb' })); //limits the body within limit
-app.use(cookieParser()); //parses the data from cookie which jwt
+app.use(cookieParser()); //reads cookies(jwt) from the HTTP req header, parses them,& stores in req.cookies
+app.use(express.urlencoded({ extended: true, limit: '10kb' })); //parses form data. extended:true -> parses nested objects
 
 //SECURITY MIDDLEWARES - mongoSanitize, xss, hpp
 //sanitize the req body against NoSQL query injection
@@ -119,6 +121,9 @@ app.use('/api/v1/users', userRouter);
 
 app.use('/api/v1/reviews', reviewRouter);
 
+// app.all('*', (req, res, next) => {
+//   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+// });
 app.use(globalErrorHandler);
 
 module.exports = app;
