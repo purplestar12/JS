@@ -1,4 +1,5 @@
 const express = require('express');
+
 const userRouter = require('./../controllers/userController');
 const authController = require('./../controllers/authController');
 const userController = require('./../controllers/userController');
@@ -17,7 +18,12 @@ router.use(authController.protectRoute);
 
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
-router.patch('/updateMe', userRouter.updateMe);
+router.patch(
+  '/updateMe',
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userRouter.updateMe,
+); //'photo'-> name of the field which takes file as input
 router.delete('/deleteMe', userRouter.deleteMe);
 
 router.use(authController.restrictTo('admin'));

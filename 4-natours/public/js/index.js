@@ -34,9 +34,15 @@ if (logoutBtn) {
 if (saveUserData) {
   saveUserData.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    updateSettings({ name, email }, 'data');
+
+    //browser API constructs form data, so that text fields & files can be sent to the server using multipart/form-data
+    const form = new FormData(); //recreate multipart/form-data
+
+    form.append('name', document.getElementById('name').value);
+    form.append('email', document.getElementById('email').value);
+    form.append('photo', document.getElementById('photo').files[0]);
+
+    updateSettings(form, 'data');
   });
 }
 

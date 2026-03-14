@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const User = require('./../models/userModel');
 const AppError = require('./../utils/appError');
-const emailSender = require('./../utils/email');
+const Email = require('./../utils/email');
 
 dotenv.config((path = './../config.env'));
 
@@ -51,13 +51,20 @@ const signToken = (id) => {
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, email, password, confirmPassword } = req.body;
-    const newUser = await User.create({
-      name,
-      email,
-      password,
-      confirmPassword,
-    });
+    // const { name, email, password, confirmPassword } = req.body;
+    // const newUser = await User.create({
+    //   name,  http://127.0.0.1:9000/me
+    //   email, http://127.0.0.1:9000/me
+    //   password,
+    //   confirmPassword,
+    // });
+    const newUser = await User.create(req.body);
+    const url = `${req.protocol}://${req.get('host')}/me`;
+
+    console.log('url: ', url);
+    console.log('before sendwelcome');
+
+    await new Email(newUser, url).sendWelcome();
 
     createAndSendToken(newUser, 201, res);
   } catch (err) {
@@ -209,25 +216,17 @@ exports.forgotPassword = async (req, res, next) => {
   await user.save({ validateBeforeSave: false }); //not to run validators for this save. coz, we don't have 'confirm password' field which is available only for signup
 
   const resetURL = `${req.protocol}//${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
-
-  const message = `Forgot your password? Please click the link to update your password.\n${resetURL} 
-  \nPlease ignore this email, if you didn't forget your password`;
-
-  console.log('message:: ', message);
+  console.log('user: ', user);
 
   //3. send the random token to the given user email
   try {
-    await emailSender({
-      email: user.email,
-      subject: 'Your password reset will expire in 10 minutes ',
-      message: message,
-    });
+    console.log('tryyyyyyyyyyyy');
+    await new Email(user, resetURL).sendPasswordReset();
     res.status(200).json({
       status: 'success',
       message: 'gmail sent',
     });
   } catch (err) {
-    console.log('user:: ', user);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });

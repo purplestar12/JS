@@ -95,7 +95,6 @@ app.use(
 //for just normal testing -this middleware
 app.use((req, res, next) => {
   console.log('request log');
-  console.log(req.cookies);
   next();
 });
 

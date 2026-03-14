@@ -237,12 +237,12 @@ if (logoutBtn) {
 }
 if (saveUserData) saveUserData.addEventListener('submit', (e)=>{
     e.preventDefault();
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    (0, _updateSettings.updateSettings)({
-        name,
-        email
-    }, 'data');
+    //browser API constructs form data, so that text fields & files can be sent to the server using multipart/form-data
+    const form = new FormData(); //recreate multipart/form-data
+    form.append('name', document.getElementById('name').value);
+    form.append('email', document.getElementById('email').value);
+    form.append('photo', document.getElementById('photo').files[0]);
+    (0, _updateSettings.updateSettings)(form, 'data');
 });
 if (saveUserPassword) saveUserPassword.addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -7232,7 +7232,12 @@ const updateSettings = async (data, type)=>{
             data
         });
         console.log('res.data.status: ', res.data.status);
-        if (res.data.status === 'success') (0, _alert.showAlert)('success', `${type.toUpperCase()} updated successfully!`);
+        if (res.data.status === 'success') {
+            (0, _alert.showAlert)('success', `${type.toUpperCase()} updated successfully!`);
+            if (type === 'data') window.setTimeout(()=>{
+                location.reload(true);
+            }, 5000);
+        }
     } catch (err) {
         (0, _alert.showAlert)('error', 'Error updating details. Please check the details!');
     }
